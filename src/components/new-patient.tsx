@@ -15,7 +15,7 @@ import {
 import { Form } from "./ui/form";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PatientFormSchema, PatientFormInput, PatientForm, parsePatientForm } from "@/lib/schema";
+import { PatientFormSchema } from "@/lib/schema";
 import { z } from "zod";
 import { CustomInput } from "./custom-input";
 import { GENDER, MARITAL_STATUS, RELATION } from "@/lib";
@@ -41,13 +41,16 @@ export const NewPatient = ({ data, type }: DataProps) => {
   };
 
   const userId = user?.id;
-  const form = useForm<PatientFormInput>({
+  const form = useForm<
+    z.input<typeof PatientFormSchema>,
+    unknown,
+    z.output<typeof PatientFormSchema>
+  >({
     resolver: zodResolver(PatientFormSchema),
     defaultValues: {
       ...userData,
       address: "",
-      // date input expects yyyy-mm-dd string; schema will coerce to Date
-      date_of_birth: new Date().toISOString().split("T")[0],
+      date_of_birth: new Date(),
       gender: "MALE",
       marital_status: "single",
       emergency_contact_name: "",
@@ -62,23 +65,15 @@ export const NewPatient = ({ data, type }: DataProps) => {
     },
   });
 
-  const onSubmit: SubmitHandler<PatientFormInput> = async (values) => {
+  const onSubmit: SubmitHandler<z.output<typeof PatientFormSchema>> = async (
+    values
+  ) => {
     setLoading(true);
-
-    // Parse/coerce values (will convert date string -> Date, validate)
-    let parsed: PatientForm;
-    try {
-      parsed = parsePatientForm(values);
-    } catch (err) {
-      setLoading(false);
-      toast.error("Validation failed");
-      return;
-    }
 
     const res =
       type === "create"
-        ? await createNewPatient(parsed, userId!)
-        : await updatePatient(parsed, userId!);
+        ? await createNewPatient(values, userId!)
+        : await updatePatient(values, userId!);
 
     setLoading(false);
 
@@ -94,11 +89,7 @@ export const NewPatient = ({ data, type }: DataProps) => {
 
   useEffect(() => {
     if (type === "create") {
-      userData &&
-        form.reset({
-          ...userData,
-          date_of_birth: new Date().toISOString().split("T")[0],
-        });
+      userData && form.reset({ ...userData });
     } else if (type === "update") {
       data &&
         form.reset({
@@ -106,7 +97,7 @@ export const NewPatient = ({ data, type }: DataProps) => {
           last_name: data.last_name,
           email: data.email,
           phone: data.phone,
-          date_of_birth: new Date(data.date_of_birth).toISOString().split("T")[0],
+          date_of_birth: new Date(data.date_of_birth),
           gender: data.gender,
           marital_status: data.marital_status as
             | "married"
@@ -134,7 +125,7 @@ export const NewPatient = ({ data, type }: DataProps) => {
           service_consent: data.service_consent,
         });
     }
-  }, [user, data, type, form]);
+  }, [user]);
 
   return (
     <Card className="max-w-6xl w-full p-4 ">
