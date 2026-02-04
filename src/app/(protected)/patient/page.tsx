@@ -1,11 +1,14 @@
-import { StatCard } from '@/components/stat-card';
-import { Button } from '@/components/ui/button';
-import { StatSummary } from '@/components/ui/charts/stat-summary';
-import { getPatientDashboardStatistics } from '@/utils/services/patient';
-import { currentUser } from '@clerk/nextjs/server';
-import { Briefcase, BriefcaseBusiness, BriefcaseMedical, Link } from 'lucide-react';
-import { redirect } from 'next/navigation';
-import React, { use } from 'react';
+import { AppointmentChart } from "@/components/charts/appointment-chart";
+import { StatSummary } from "@/components/charts/stat-summary";
+import { StatCard } from "@/components/stat-card";
+import { Button } from "@/components/ui/button";
+import { getPatientDashboardStatistics } from "@/utils/services/patient";
+import { UserButton } from "@clerk/nextjs";
+import { currentUser } from "@clerk/nextjs/server";
+import { Briefcase, BriefcaseBusiness, BriefcaseMedical } from "lucide-react";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import React from "react";
 
 const PatientDashboard = async () => {
   const user = await currentUser();
@@ -18,13 +21,12 @@ const PatientDashboard = async () => {
     availableDoctor,
     monthlyData,
   } = await getPatientDashboardStatistics(user?.id!);
+
   if (user && !data) {
-    redirect('/patient/registration');
+    redirect("/patient/registration");
   }
 
-  if (!data) {
-    return null;
-  }
+  if (!data) return null;
 
   const cardData = [
     {
@@ -86,16 +88,26 @@ const PatientDashboard = async () => {
           </div>
         </div>
 
-        {/* RIGHT */}
-        <div className="w-full xl:w-[30%]">
-          <div className="w-full h-[450px] mb-8">
-            <StatSummary data={appointmentCounts} total={totalAppointments} />
-          </div>
+        <div className="h-[500px]">
+          <AppointmentChart data={monthlyData} />
+        </div> 
 
+        {/* <div className="bg-white rounded-xl p-4 mt-8">
+          <RecentAppointments data={last5Records} />
+        </div> */}
+      </div>
+
+      {/* RIGHT */}
+      <div className="w-full xl:w-[30%]">
+        <div className="w-full h-[450px] mb-8">
+          <StatSummary data={appointmentCounts} total={totalAppointments} />
         </div>
+
+        {/* <AvailableDoctors data={availableDoctor as AvailableDoctorProps} /> */}
+
+        {/* <PatientRatingContainer /> */}
       </div>
     </div>
-
   );
 };
 

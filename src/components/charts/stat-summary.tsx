@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ResponsiveContainer, RadialBarChart, RadialBar } from "recharts";
 import { Users } from "lucide-react";
 import { formatNumber } from "@/utils";
-import { Button } from "../button";
+import { Button } from "../ui/button";
 
 export const StatSummary = ({ data, total }: { data: any; total: number }) => {
   const dataInfo = [
