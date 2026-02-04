@@ -7,6 +7,12 @@ const matchers = Object.keys(routeAccess).map((route) => ({
   allowedRoles: routeAccess[route],
 }));
 
+// Rute za autentifikaciju
+const isAuthRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);
+
+// Root ruta
+const isRootRoute = createRouteMatcher(["/"]);
+
 export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth();
   const url = new URL(req.url);
@@ -16,11 +22,22 @@ export default clerkMiddleware(async (auth, req) => {
       ? sessionClaims.metadata.role
       : userId
       ? "patient"
-      : "sign-in";
+      : null;
 
+  // Ako je korisnik ulogovan i nalazi se na auth stranicama ili root, preusmeri ga
+  if (userId && (isAuthRoute(req) || isRootRoute(req))) {
+    const redirectRole = role || "patient";
+    return NextResponse.redirect(new URL(`/${redirectRole}`, url.origin));
+  }
+
+  // Ako korisnik nije ulogovan i pokušava da pristupi zaštićenoj ruti
   const matchingRoute = matchers.find(({ matcher }) => matcher(req));
+  
+  if (matchingRoute && !userId) {
+    return NextResponse.redirect(new URL("/sign-in", url.origin));
+  }
 
-  if (matchingRoute && !matchingRoute.allowedRoles.includes(role)) {
+  if (matchingRoute && !matchingRoute.allowedRoles.includes(role || "patient")) {
     // Redirect unauthorized roles to their respective default pages
     return NextResponse.redirect(new URL(`/${role}`, url.origin));
   }
