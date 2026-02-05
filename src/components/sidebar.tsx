@@ -129,7 +129,7 @@ export const Sidebar = async () => {
         },
         {
           name: "Billing",
-          href: "/patient/self?cat=payments",
+          href: "#",
           access: ["patient"],
           icon: Receipt,
         },
@@ -171,7 +171,7 @@ export const Sidebar = async () => {
             href={"/"}
             className="hidden lg:flex text-base 2xl:text-xl font-bold"
           >
-            Kinda HMS
+            E-MedRecord
           </Link>
         </div>
 
